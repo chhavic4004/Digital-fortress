@@ -16,23 +16,59 @@ const WiDefend = () => {
     setProgress(0);
     setResult(null);
 
+     // Animate progress bar just for visual smoothness
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
+        if (prev >= 90) {
           clearInterval(interval);
-          setScanning(false);
-          setResult({
-            riskLevel: "medium",
-            encryption: "WPA2",
-            dnsSafety: "Secure",
-            certificate: "Valid",
-            exposedData: ["Email addresses", "Browsing history"],
-          });
-          return 100;
         }
         return prev + 10;
+     });
+     }, 300);
+
+    try {
+       // 🌐 Connect to your backend
+      const response = await fetch("https://digital-fortress-backend.onrender.com/wifi_scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ssid: "MyPublicWiFi",
+          encryption: "WPA2",
+          dns: "8.8.8.8",
+          activity: "bank_login",
+         }),
       });
-    }, 300);
+
+      const data = await response.json();
+      clearInterval(interval);
+      setScanning(false);
+      setProgress(100);
+
+      // 🧠 Map backend response to your UI fields
+      setResult({
+        riskLevel: data.risk_level?.toLowerCase() || "unknown",
+        encryption: data.encryption || "WPA2",
+        dnsSafety: data.dns || "Secure",
+        certificate: "Valid",
+        exposedData: data.risk_factors?.length
+          ? data.risk_factors
+          : ["No major data exposure detected"],
+      });
+    } catch (error) {
+      console.error("Error fetching Wi-Fi scan result:", error);
+      clearInterval(interval);
+      setScanning(false);
+      setProgress(100);
+      setResult({
+        riskLevel: "high",
+        encryption: "Unknown",
+        dnsSafety: "Unknown",
+        certificate: "Invalid",
+        exposedData: ["Server not reachable — check your connection."],
+      });
+    }
   };
 
   const getRiskColor = (level: string) => {
