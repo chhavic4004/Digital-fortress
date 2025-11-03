@@ -6,11 +6,8 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
-  });
-};
+import { generateToken } from "../utils/generateToken.js";
+
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
