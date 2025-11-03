@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Menu, X } from "lucide-react";
+import { Shield, Menu, X, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthDialog } from "./AuthDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const location = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const navItems = [
     { path: "/", label: "Home" },
     { path: "/wi-defend", label: "Wi-Defend" },
     { path: "/fraud-detector", label: "Fraud Detector" },
+    { path: "/instant-action", label: "Emergency Guide" },
     { path: "/community", label: "Community" },
-    { path: "/scam-database", label: "Scam Database" },
+    { path: "/timelock", label: "TimeLock" },
     { path: "/awareness", label: "Awareness" },
   ];
 
@@ -43,6 +55,47 @@ const Navigation = () => {
                 {item.label}
               </Link>
             ))}
+            
+            {/* Auth Buttons */}
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{user?.username}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={logout} className="text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setAuthMode("login");
+                    setShowAuthDialog(true);
+                  }}
+                >
+                  Login
+                </Button>
+                <Button
+                  variant="hero"
+                  size="sm"
+                  onClick={() => {
+                    setAuthMode("register");
+                    setShowAuthDialog(true);
+                  }}
+                >
+                  Register
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -73,9 +126,58 @@ const Navigation = () => {
                 {item.label}
               </Link>
             ))}
+            
+            {/* Mobile Auth */}
+            <div className="pt-4 border-t space-y-2">
+              {isAuthenticated ? (
+                <>
+                  <div className="px-4 py-2 text-sm text-muted-foreground">
+                    {user?.username}
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left py-2 px-4 rounded-md text-destructive hover:bg-secondary"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setAuthMode("login");
+                      setShowAuthDialog(true);
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left py-2 px-4 rounded-md text-muted-foreground hover:bg-secondary"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAuthMode("register");
+                      setShowAuthDialog(true);
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left py-2 px-4 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Register
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
+      
+      <AuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        mode={authMode}
+      />
     </nav>
   );
 };

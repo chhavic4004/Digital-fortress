@@ -8,11 +8,11 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Cyber theme - Deep black with red accents */
-    --background: 0 0% 3%;
+    /* Cyber theme - Deep navy blue with red accents */
+    --background: 230 35% 7%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 5%;
+    --card: 230 30% 10%;
     --card-foreground: 0 0% 98%;
 
     --popover: 0 0% 5%;

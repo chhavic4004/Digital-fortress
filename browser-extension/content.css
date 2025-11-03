@@ -1,0 +1,19 @@
+/* Digital Fortress Content Script Styles */
+
+#digital-fortress-indicator {
+  user-select: none;
+  pointer-events: auto;
+}
+
+#digital-fortress-indicator * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Prevent interference with page styles */
+#digital-fortress-indicator {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+}
+

@@ -1,57 +1,107 @@
-import { Users, ThumbsUp, MessageCircle, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, ThumbsUp, MessageCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import FloatingChatbot from "@/components/FloatingChatbot";
+import { postsAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { formatDistanceToNow } from "date-fns";
+
+interface Post {
+  _id: string;
+  title: string;
+  content: string;
+  riskType: string;
+  riskLevel: "low" | "medium" | "high";
+  author: string;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  media?: string;
+  mediaType?: "image" | "video";
+  isAnonymous: boolean;
+}
 
 const Community = () => {
-  const stories = [
-    {
-      id: 1,
-      author: "Priya S.",
-      date: "2 days ago",
-      scamType: "UPI Scam",
-      title: "Fake payment confirmation message",
-      content: "I received a message claiming to be from my bank about a failed UPI transaction. They asked me to verify my details on a link. Thanks to Digital Fortress, I recognized it as a scam!",
-      likes: 24,
-      comments: 8,
-      severity: "high",
-    },
-    {
-      id: 2,
-      author: "Rajesh K.",
-      date: "5 days ago",
-      scamType: "Job Scam",
-      title: "Fake work-from-home offer",
-      content: "Received an email offering a high-paying WFH job with minimal qualifications. They asked for an upfront registration fee. Red flags everywhere!",
-      likes: 31,
-      comments: 12,
-      severity: "medium",
-    },
-    {
-      id: 3,
-      author: "Anita M.",
-      date: "1 week ago",
-      scamType: "OTP Fraud",
-      title: "Caller pretending to be bank executive",
-      content: "Someone called claiming to be from my bank's fraud department and asked for my OTP to 'block suspicious transactions'. I hung up and called the bank directly.",
-      likes: 45,
-      comments: 15,
-      severity: "high",
-    },
-    {
-      id: 4,
-      author: "Vikram P.",
-      date: "1 week ago",
-      scamType: "Investment Scam",
-      title: "Crypto investment scheme",
-      content: "A 'financial advisor' messaged me on WhatsApp about a guaranteed returns crypto scheme. The website looked professional but was registered just 2 weeks ago.",
-      likes: 28,
-      comments: 9,
-      severity: "medium",
-    },
-  ];
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const data = await postsAPI.getAll();
+      setPosts(data);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load posts",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to like posts",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await postsAPI.like(postId);
+      // Update the post in the list
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId
+            ? { ...post, likesCount: result.likesCount }
+            : post
+        )
+      );
+      
+      // Update liked state
+      if (result.liked) {
+        setLikedPosts((prev) => new Set(prev).add(postId));
+      } else {
+        setLikedPosts((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(postId);
+          return newSet;
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to like post",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePostCreated = () => {
+    fetchPosts();
+    setShowCreateDialog(false);
+    toast({
+      title: "Success",
+      description: "Your story has been shared!",
+    });
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -63,6 +113,14 @@ const Community = () => {
         return "bg-green-500";
       default:
         return "bg-muted";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch {
+      return "recently";
     }
   };
 
@@ -82,59 +140,127 @@ const Community = () => {
             <p className="text-xl text-muted-foreground">
               Real Stories, Real Protection
             </p>
-            <Button variant="hero" size="lg">
+            <Button
+              variant="hero"
+              size="lg"
+              onClick={() => {
+                if (!isAuthenticated) {
+                  toast({
+                    title: "Login Required",
+                    description: "Please login to share your story",
+                    variant: "destructive",
+                  });
+                } else {
+                  setShowCreateDialog(true);
+                }
+              }}
+            >
               Share Your Story
             </Button>
           </div>
 
-          {/* Stories */}
-          <div className="space-y-6">
-            {stories.map((story) => (
-              <Card
-                key={story.id}
-                className="bg-card/50 backdrop-blur border-primary/20 hover:border-primary transition-all"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium">{story.author}</span>
-                        <span className="text-sm text-muted-foreground">
-                          • {story.date}
-                        </span>
-                      </div>
-                      <CardTitle className="text-xl mb-2">{story.title}</CardTitle>
-                      <div className="flex gap-2">
-                        <Badge variant="outline">{story.scamType}</Badge>
-                        <Badge className={`${getSeverityColor(story.severity)} text-white`}>
-                          {story.severity} risk
-                        </Badge>
-                      </div>
-                    </div>
-                    <AlertTriangle className="h-6 w-6 text-primary" />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <CardDescription className="text-base leading-relaxed">
-                    {story.content}
-                  </CardDescription>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
 
-                  <div className="flex items-center gap-6 pt-2 border-t border-primary/20">
-                    <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                      <ThumbsUp className="h-4 w-4" />
-                      <span className="text-sm">{story.likes}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                      <MessageCircle className="h-4 w-4" />
-                      <span className="text-sm">{story.comments}</span>
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Posts */}
+          {!loading && posts.length === 0 && (
+            <Card className="bg-card/50 backdrop-blur border-primary/20">
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  No stories yet. Be the first to share your experience!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!loading && (
+            <div className="space-y-6">
+              {posts.map((post) => (
+                <Card
+                  key={post._id}
+                  className="bg-card/50 backdrop-blur border-primary/20 hover:border-primary transition-all"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-medium">{post.author}</span>
+                          <span className="text-sm text-muted-foreground">
+                            • {formatDate(post.createdAt)}
+                          </span>
+                        </div>
+                        <CardTitle className="text-xl mb-2">{post.title}</CardTitle>
+                        <div className="flex gap-2">
+                          <Badge variant="outline">{post.riskType}</Badge>
+                          <Badge
+                            className={`${getSeverityColor(post.riskLevel)} text-white`}
+                          >
+                            {post.riskLevel} risk
+                          </Badge>
+                        </div>
+                      </div>
+                      <AlertTriangle className="h-6 w-6 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <CardDescription className="text-base leading-relaxed">
+                      {post.content}
+                    </CardDescription>
+
+                    {post.media && (
+                      <div className="mt-4">
+                        {post.mediaType === "image" ? (
+                          <img
+                            src={`http://localhost:5000${post.media}`}
+                            alt={post.title}
+                            className="rounded-lg max-w-full h-auto"
+                          />
+                        ) : post.mediaType === "video" ? (
+                          <video
+                            src={`http://localhost:5000${post.media}`}
+                            controls
+                            className="rounded-lg max-w-full"
+                          >
+                            Your browser does not support video playback.
+                          </video>
+                        ) : null}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-6 pt-2 border-t border-primary/20">
+                      <button
+                        onClick={() => handleLike(post._id)}
+                        className={`flex items-center gap-2 transition-colors ${
+                          likedPosts.has(post._id)
+                            ? "text-primary"
+                            : "text-muted-foreground hover:text-primary"
+                        }`}
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                        <span className="text-sm">{post.likesCount}</span>
+                      </button>
+                      <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                        <MessageCircle className="h-4 w-4" />
+                        <span className="text-sm">{post.commentsCount}</span>
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      <CreatePostDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onPostCreated={handlePostCreated}
+      />
     </div>
   );
 };

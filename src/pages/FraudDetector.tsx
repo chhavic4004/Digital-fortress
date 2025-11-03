@@ -1,186 +1,91 @@
 import { useState } from "react";
-import { Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Shield, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import FloatingChatbot from "@/components/FloatingChatbot";
+import ResultCard from "@/components/ResultCard";
 
 const FraudDetector = () => {
   const [input, setInput] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const analyzeMessage = () => {
-    setAnalyzing(true);
+  const base = (import.meta as any).env?.VITE_API_URL || "http://localhost:5000/api";
+
+  const analyzeMessage = async () => {
+    if (!input.trim()) return;
     
-    setTimeout(() => {
-      setResult({
-        status: "suspicious",
-        confidence: 87,
-        risks: [
-          "Urgency language detected",
-          "Unusual sender domain",
-          "Request for personal information",
-          "Suspicious link patterns",
-        ],
-        recommendations: [
-          "Do not click on any links",
-          "Do not share personal information",
-          "Report to cybercrime.gov.in",
-          "Block the sender",
-        ],
+    setAnalyzing(true);
+    setResult(null);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${base}/detect_fraud`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: input }),
       });
+      
+      const data = await response.json();
+      
+      if (data?.success && data?.data) {
+        setResult(data.data);
+      } else {
+        setError("Failed to analyze. Please try again.");
+      }
+    } catch (error) {
+      setError("Could not contact threat intelligence servers. Please try again.");
+    } finally {
       setAnalyzing(false);
-    }, 2000);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "safe":
-        return "bg-green-500";
-      case "suspicious":
-        return "bg-yellow-500";
-      case "fraudulent":
-        return "bg-primary";
-      default:
-        return "bg-muted";
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.15),transparent_50%),radial-gradient(circle_at_80%_0%,rgba(168,85,247,0.12),transparent_40%),radial-gradient(circle_at_50%_100%,rgba(99,102,241,0.12),transparent_45%)]" />
       <Navigation />
       <FloatingChatbot />
 
-      <div className="container mx-auto px-4 pt-24 pb-12">
+      <div className="container mx-auto px-4 pt-24 pb-12 relative">
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="text-center space-y-4">
-            <Shield className="h-16 w-16 text-primary mx-auto animate-glow-pulse" />
-            <h1 className="text-4xl md:text-5xl font-bold">
-              Fraud <span className="text-primary">Detector</span>
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              AI-Powered Message & Call Analysis
-            </p>
+          <div className="text-center space-y-2">
+            <Shield className="h-14 w-14 text-primary mx-auto" />
+            <h1 className="text-4xl md:text-5xl font-bold">Fraud Detector — <span className="text-primary">AI & API-Powered Scam Analysis</span></h1>
+            <p className="text-base md:text-lg text-muted-foreground">Paste a suspicious message or link and scan its digital footprint.</p>
           </div>
 
-          {/* Input Card */}
-          <Card className="bg-card/50 backdrop-blur border-primary/20">
+          <Card className="bg-card/60 backdrop-blur border-primary/20">
             <CardHeader>
-              <CardTitle className="text-2xl">Analyze Message or Number</CardTitle>
-              <CardDescription>
-                Paste a message, link, or phone number to check for fraud
-              </CardDescription>
+              <CardTitle className="text-2xl">Analyze message or link</CardTitle>
+              <CardDescription>We only send extracted URLs to external reputation APIs.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Paste your message, link, or phone number here..."
+                placeholder="Paste suspicious message, link, or number here…"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="min-h-32"
+                className="min-h-36"
               />
-              <Button
-                onClick={analyzeMessage}
-                disabled={!input.trim() || analyzing}
-                variant="hero"
-                size="lg"
-                className="w-full"
-              >
-                {analyzing ? "Analyzing..." : "Analyze for Fraud"}
+              <Button onClick={analyzeMessage} disabled={!input.trim() || analyzing} size="lg" className="w-full">
+                {analyzing ? (
+                  <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Scanning digital footprint…</span>
+                ) : (
+                  "Scan Now"
+                )}
               </Button>
+              {error && (
+                <div className="text-sm text-yellow-400">⚠️ {error}</div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Results */}
           {result && (
-            <div className="space-y-6">
-              {/* Status Badge */}
-              <Card className="border-primary/20">
-                <CardContent className="pt-6">
-                  <div className="text-center space-y-4">
-                    <Badge
-                      className={`${getStatusColor(result.status)} text-white text-lg px-6 py-2`}
-                    >
-                      {result.status.toUpperCase()}
-                    </Badge>
-                    <p className="text-muted-foreground">
-                      Confidence: {result.confidence}%
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Risk Indicators */}
-              <Card className="border-yellow-500/50 bg-yellow-500/5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-yellow-500">
-                    <AlertTriangle className="h-5 w-5" />
-                    Risk Indicators
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {result.risks.map((risk: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                        <span>{risk}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Recommendations */}
-              <Card className="border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                    What To Do Next
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {result.recommendations.map((rec: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Emergency Contacts */}
-              <Card className="border-primary bg-gradient-cyber">
-                <CardHeader>
-                  <CardTitle>Emergency Helpline</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p className="text-lg">
-                      <strong>Cybercrime Helpline:</strong>{" "}
-                      <a href="tel:1930" className="text-primary hover:text-accent">
-                        1930
-                      </a>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Report at:{" "}
-                      <a
-                        href="https://cybercrime.gov.in"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-accent underline"
-                      >
-                        cybercrime.gov.in
-                      </a>
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <ResultCard result={result} />
           )}
         </div>
       </div>
@@ -189,3 +94,4 @@ const FraudDetector = () => {
 };
 
 export default FraudDetector;
+

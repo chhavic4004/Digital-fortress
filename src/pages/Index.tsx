@@ -1,12 +1,48 @@
 import { Link } from "react-router-dom";
-import { Shield, Wifi, MessageSquare, Users, Database, BookOpen, Chrome, Brain } from "lucide-react";
+import { Shield, Wifi, MessageSquare, Users, Database, BookOpen, Chrome, Brain, ShieldAlert, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import FloatingChatbot from "@/components/FloatingChatbot";
+import { deceptionAPI } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Index = () => {
+  const [recentEvents, setRecentEvents] = useState<any[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+
+  useEffect(() => {
+    const fetchRecentEvents = async () => {
+      try {
+        const events = await deceptionAPI.getPublicFeed(3, 0);
+        setRecentEvents(events);
+      } catch (error) {
+        console.error("Error fetching recent events:", error);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchRecentEvents();
+  }, []);
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "Critical":
+        return "bg-red-500";
+      case "High":
+        return "bg-primary";
+      case "Medium":
+        return "bg-yellow-500";
+      case "Low":
+        return "bg-green-500";
+      default:
+        return "bg-muted";
+    }
+  };
+
   const features = [
     {
       icon: Wifi,
@@ -133,6 +169,71 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Recent Protection Events */}
+      {recentEvents.length > 0 && (
+        <section className="py-12 px-4">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold mb-2">
+                  Recent <span className="text-primary">Protection Events</span>
+                </h2>
+                <p className="text-muted-foreground">
+                  Real-time threat detection and protection in action
+                </p>
+              </div>
+              <Link to="/awareness-feed">
+                <Button variant="outline" className="gap-2">
+                  View All
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {recentEvents.map((event) => (
+                <Card
+                  key={event.id}
+                  className="bg-card/50 backdrop-blur border-primary/20 hover:border-primary/40 transition-all"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/20">
+                        <ShieldAlert className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base mb-2 line-clamp-2">
+                          {event.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className={`${getSeverityColor(event.severity)} text-white text-xs`}>
+                            {event.severity}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {event.summary}
+                    </p>
+                    <Link to={`/awareness-feed`}>
+                      <Button variant="ghost" size="sm" className="w-full">
+                        Learn More
+                        <ArrowRight className="ml-2 h-3 w-3" />
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Call to Action */}
       <section className="py-20 px-4 bg-gradient-red-black">

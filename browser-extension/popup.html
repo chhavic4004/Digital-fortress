@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Fortress - Cyber Guardian</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span class="shield">🛡️</span>
+        <h1>Digital Fortress</h1>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot safe"></span>
+        <span>Active Protection</span>
+      </div>
+    </div>
+
+    <!-- Current Site Status -->
+    <div class="card" id="current-site-card">
+      <div class="card-header">
+        <h2>Current Site</h2>
+        <button id="scan-current" class="btn-scan">Scan Now</button>
+      </div>
+      <div class="site-info" id="site-info">
+        <div class="loading">Scanning...</div>
+      </div>
+    </div>
+
+    <!-- Manual Scan -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Manual Scan</h2>
+      </div>
+      <div class="input-group">
+        <input type="text" id="url-input" placeholder="Enter URL to scan..." />
+        <button id="scan-url" class="btn-primary">Scan</button>
+      </div>
+      <div class="input-group" style="margin-top: 12px;">
+        <textarea id="text-input" placeholder="Paste suspicious text or message..." rows="3"></textarea>
+        <button id="analyze-text" class="btn-secondary">Analyze Text</button>
+      </div>
+    </div>
+
+    <!-- Scan Results -->
+    <div class="card" id="results-card" style="display: none;">
+      <div class="card-header">
+        <h2>Scan Results</h2>
+        <button id="close-results" class="btn-close">×</button>
+      </div>
+      <div id="results-content"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Quick Actions</h2>
+      </div>
+      <div class="actions">
+        <button id="view-history" class="btn-action">
+          <span>📊</span>
+          <span>Scan History</span>
+        </button>
+        <button id="settings" class="btn-action">
+          <span>⚙️</span>
+          <span>Settings</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal" id="history-modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Scan History</h2>
+          <button id="close-history" class="btn-close">×</button>
+        </div>
+        <div class="modal-body" id="history-list"></div>
+        <div class="modal-footer">
+          <button id="clear-history" class="btn-danger">Clear History</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
