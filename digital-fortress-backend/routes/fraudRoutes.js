@@ -16,11 +16,12 @@ router.post('/detect_fraud', async (req, res) => {
       });
     }
 
-    // First, try enhanced detection via Flask backend (port 5001)
+    // First, try enhanced detection via Flask backend
     try {
+      const flaskUrl = process.env.FLASK_API_URL || 'http://localhost:5001/api';
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
-      const resp = await fetch('http://localhost:5001/api/detect_fraud', {
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch(`${flaskUrl}/detect_fraud`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),

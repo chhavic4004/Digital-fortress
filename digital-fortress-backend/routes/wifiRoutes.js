@@ -194,9 +194,10 @@ router.post('/wifi_scan', async (req, res) => {
 // @access  Public
 router.get('/auto_wifi_scan', async (req, res) => {
   try {
+    const flaskUrl = process.env.FLASK_API_URL || 'http://localhost:5001/api';
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
-    const resp = await fetch('http://localhost:5001/api/auto_wifi_scan', {
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const resp = await fetch(`${flaskUrl}/auto_wifi_scan`, {
       method: 'GET',
       signal: controller.signal,
     });
