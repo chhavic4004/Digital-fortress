@@ -2,9 +2,11 @@ import jwt from "jsonwebtoken";
 
 let hasWarned = false;
 
+export const getJwtSecret = () => process.env.JWT_SECRET || "fallbackSecretKey";
+
 export const generateToken = (id) => {
   try {
-    const secret = process.env.JWT_SECRET || "fallbackSecretKey";
+    const secret = getJwtSecret();
     const expiresIn = process.env.JWT_EXPIRE?.trim() || "1h";
 
     if (!process.env.JWT_SECRET && !hasWarned) {

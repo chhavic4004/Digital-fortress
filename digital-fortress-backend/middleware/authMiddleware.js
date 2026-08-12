@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
+import { getJwtSecret } from '../utils/generateToken.js';
 
 // Protect routes
 export const protect = async (req, res, next) => {
@@ -14,7 +16,12 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
 
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret());
+
+      if (mongoose.connection.readyState !== 1) {
+        req.user = { _id: decoded.id };
+        return next();
+      }
 
       // Get user from the token (excluding password)
       req.user = await User.findById(decoded.id).select('-password');
