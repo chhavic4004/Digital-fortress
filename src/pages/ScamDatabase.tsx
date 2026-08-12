@@ -14,6 +14,7 @@ import {
 import Navigation from "@/components/Navigation";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import { useToast } from "@/hooks/use-toast";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 interface Scam {
   id: number;
@@ -42,7 +43,7 @@ const ScamDatabase = () => {
   const fetchScams = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/get_scams");
+      const response = await fetch(`${API_BASE_URL}/get_scams`);
       const data = await response.json();
       
       if (data.success) {
@@ -73,7 +74,7 @@ const ScamDatabase = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/stats");
+      const response = await fetch(`${API_BASE_URL}/stats`);
       const data = await response.json();
       
       if (data.success && data.data) {

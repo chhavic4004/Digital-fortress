@@ -6,14 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import ResultCard from "@/components/ResultCard";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 const FraudDetector = () => {
   const [input, setInput] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const base = (import.meta as any).env?.VITE_API_URL || "http://localhost:5000/api";
 
   const analyzeMessage = async () => {
     if (!input.trim()) return;
@@ -23,7 +22,7 @@ const FraudDetector = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${base}/detect_fraud`, {
+      const response = await fetch(`${API_BASE_URL}/detect_fraud`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

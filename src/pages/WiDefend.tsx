@@ -18,6 +18,7 @@ import FloatingChatbot from "@/components/FloatingChatbot";
 import RiskMeter from "@/components/RiskMeter";
 import DataExposureList from "@/components/DataExposureList";
 import SourceCard from "@/components/SourceCard";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 // Calls backend auto_wifi_scan endpoint to analyze current network via external APIs.
 const WiDefend = () => {
@@ -35,7 +36,6 @@ const WiDefend = () => {
     httpTest: true,
   });
   const [showForm, setShowForm] = useState(true);
-  const base = (import.meta as any).env?.VITE_API_URL || "http://localhost:5000/api";
 
   // Detect network information on component mount
   useEffect(() => {
@@ -92,7 +92,7 @@ const WiDefend = () => {
     }, 220);
 
     try {
-      const resp = await fetch(`${base}/auto_wifi_scan`, { method: "GET" });
+      const resp = await fetch(`${API_BASE_URL}/auto_wifi_scan`, { method: "GET" });
       const data = await resp.json();
       clearInterval(interval);
       setScanning(false);
@@ -143,7 +143,7 @@ const WiDefend = () => {
 
     try {
        // 🌐 Connect to your backend with real network info
-      const response = await fetch(`${base}/wifi_scan`, {
+      const response = await fetch(`${API_BASE_URL}/wifi_scan`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

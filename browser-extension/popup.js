@@ -1,5 +1,5 @@
 // Digital Fortress Extension Popup Script
-const API_BASE_URL = 'http://localhost:5001/api'; // Change in production
+const API_BASE_URL = window.DIGITAL_FORTRESS_API_BASE_URL; // Change in production
 
 // DOM Elements
 const scanCurrentBtn = document.getElementById('scan-current');

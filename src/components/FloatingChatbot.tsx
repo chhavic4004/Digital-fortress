@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 interface Message {
   role: "user" | "assistant";
@@ -34,7 +35,6 @@ const FloatingChatbot = () => {
     lang?: string;
   };
   const [recognition, setRecognition] = useState<SpeechRecognitionLike | null>(null);
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
   // Initialize Web Speech API with fallback
   useEffect(() => {

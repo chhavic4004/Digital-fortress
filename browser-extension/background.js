@@ -1,5 +1,7 @@
 // Digital Fortress Browser Extension - Background Service Worker
-const API_BASE_URL = 'http://localhost:5001/api'; // Change to your backend URL in production
+importScripts('api-config.js');
+
+const API_BASE_URL = self.DIGITAL_FORTRESS_API_BASE_URL; // Change to your backend URL in production
 
 // Badge color mapping
 const BADGE_COLORS = {

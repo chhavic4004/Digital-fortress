@@ -15,6 +15,7 @@ import Navigation from "@/components/Navigation";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import { DeceptionCard } from "@/components/DeceptionCard";
 import { DeceptionTimeline } from "@/components/DeceptionTimeline";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
 interface DeceptionEvent {
   id: string;
@@ -52,8 +53,6 @@ const AwarenessFeed = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fullEventDetails, setFullEventDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     fetchEvents();

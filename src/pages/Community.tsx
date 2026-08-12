@@ -10,6 +10,7 @@ import { postsAPI } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import { formatDistanceToNow } from "date-fns";
+import { API_ORIGIN } from "@/lib/apiConfig";
 
 interface Post {
   _id: string;
@@ -215,13 +216,13 @@ const Community = () => {
                       <div className="mt-4">
                         {post.mediaType === "image" ? (
                           <img
-                            src={`http://localhost:5000${post.media}`}
+                            src={`${API_ORIGIN}${post.media}`}
                             alt={post.title}
                             className="rounded-lg max-w-full h-auto"
                           />
                         ) : post.mediaType === "video" ? (
                           <video
-                            src={`http://localhost:5000${post.media}`}
+                            src={`${API_ORIGIN}${post.media}`}
                             controls
                             className="rounded-lg max-w-full"
                           >
