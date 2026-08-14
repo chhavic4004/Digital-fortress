@@ -3,6 +3,10 @@ importScripts('api-config.js');
 
 const API_BASE_URL = self.DIGITAL_FORTRESS_API_BASE_URL; // Change to your backend URL in production
 
+// URL of the deployed/local frontend app, used to open the Emergency Guide
+// from a danger notification. Change this to your production URL when you deploy.
+const FRONTEND_BASE_URL = self.DIGITAL_FORTRESS_FRONTEND_BASE_URL || 'http://localhost:8080';
+
 // Badge color mapping
 const BADGE_COLORS = {
   safe: '#10b981',      // Green
@@ -10,6 +14,38 @@ const BADGE_COLORS = {
   danger: '#ef4444',     // Red
   unknown: '#6b7280',    // Gray
 };
+
+// Map scan reasons to an emergency domain, reusing the same reason text
+// already used to classify "type" (Phishing / Fake Website / Suspicious Link).
+function inferEmergencyDomain(scanData) {
+  const reasons = (scanData.reasons || []).map((r) => r.toLowerCase());
+  const singleReason = (scanData.reason || '').toLowerCase();
+  const allText = [...reasons, singleReason].join(' ');
+
+  if (allText.includes('payment') || allText.includes('bank') || allText.includes('upi') || allText.includes('transaction')) {
+    return 'fraud_upi';
+  }
+  if (allText.includes('password') || allText.includes('login') || allText.includes('account') || allText.includes('session')) {
+    return 'account_compromise';
+  }
+  if (allText.includes('wifi') || allText.includes('wi-fi') || allText.includes('network')) {
+    return 'unsafe_wifi';
+  }
+  if (allText.includes('phishing') || allText.includes('fake') || allText.includes('suspicious link')) {
+    return 'scam_phishing';
+  }
+  return 'general_help';
+}
+
+// Track which notification IDs correspond to which emergency domain,
+// so the click/button handler knows where to send the user.
+const notificationDomainMap = {};
+
+function openEmergencyGuide(domain) {
+  chrome.tabs.create({
+    url: `${FRONTEND_BASE_URL}/instant-action?domain=${encodeURIComponent(domain)}`,
+  });
+}
 
 // Function to log deception events
 async function logDeceptionEvent(url, scanData, riskLevel) {
@@ -162,14 +198,21 @@ async function scanUrl(url, tabId) {
         logDeceptionEvent(url, data.data, riskLevel);
       }
 
-      // Show notification for dangerous sites
+      // Show notification for dangerous sites, with a button to open the
+      // Emergency Guide preselected to the right domain.
       if (riskLevel === 'danger') {
-        chrome.notifications.create({
+        const domain = inferEmergencyDomain(data.data);
+        const notificationId = `danger-${Date.now()}`;
+
+        notificationDomainMap[notificationId] = domain;
+
+        chrome.notifications.create(notificationId, {
           type: 'basic',
           iconUrl: 'icons/icon48.png',
           title: '⚠️ Dangerous Website Detected',
           message: `${data.data.reason || 'This website may be fraudulent or malicious.'}`,
           priority: 2,
+          buttons: [{ title: 'Open Emergency Guide' }],
         });
       }
     } else {
@@ -181,6 +224,26 @@ async function scanUrl(url, tabId) {
     updateBadge('unknown', null);
   }
 }
+
+// Clicking the notification itself, or its "Open Emergency Guide" button,
+// opens the emergency guide with the inferred domain preselected.
+chrome.notifications.onClicked.addListener((notificationId) => {
+  const domain = notificationDomainMap[notificationId];
+  if (domain) {
+    openEmergencyGuide(domain);
+    chrome.notifications.clear(notificationId);
+    delete notificationDomainMap[notificationId];
+  }
+});
+
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+  const domain = notificationDomainMap[notificationId];
+  if (domain && buttonIndex === 0) {
+    openEmergencyGuide(domain);
+    chrome.notifications.clear(notificationId);
+    delete notificationDomainMap[notificationId];
+  }
+});
 
 // Determine risk level from backend response
 function determineRiskLevel(data) {
@@ -328,4 +391,3 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       });
   }
 });
-

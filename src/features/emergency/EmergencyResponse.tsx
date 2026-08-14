@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import EmergencySteps from "./EmergencySteps";
 import EmergencyContacts from "./EmergencyContacts";
 import type { EmergencyFlow } from "./types";
+import { responseCopy } from "./emergencyCopy";
 
 type Props = {
   flow: EmergencyFlow;
@@ -31,7 +32,7 @@ const EmergencyResponse = ({ flow, activeStep, completedSteps, onToggleStep, onC
           <div className="rounded-lg border border-primary/30 bg-background/60 p-4">
             <div className="flex items-center gap-2 font-semibold text-primary">
               <BadgeAlert className="h-4 w-4" />
-              Act now
+              {responseCopy.actNowLabel}
             </div>
             <p className="mt-2 text-sm text-muted-foreground">{flow.immediateAction}</p>
           </div>

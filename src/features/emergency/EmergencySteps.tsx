@@ -1,3 +1,4 @@
+import { responseCopy } from "./emergencyCopy";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,7 @@ const EmergencySteps = ({ steps, activeStep, completedSteps, onToggleStep, onCom
                   <div>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       {step.title}
-                      {isCompleted && <Badge variant="outline" className="border-green-500 text-green-500">Completed</Badge>}
+                      {isCompleted && <Badge variant="outline" className="border-green-500 text-green-500">{responseCopy.stepCompletedLabel}</Badge>}
                     </CardTitle>
                   </div>
                 </div>
@@ -51,7 +52,7 @@ const EmergencySteps = ({ steps, activeStep, completedSteps, onToggleStep, onCom
                 </ol>
                 {!isCompleted && (
                   <Button variant="hero" className="w-full" onClick={(e) => { e.stopPropagation(); onCompleteStep(stepNumber); }}>
-                    Mark this step complete
+                    {responseCopy.markStepCompleteLabel}
                   </Button>
                 )}
               </CardContent>

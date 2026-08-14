@@ -1,6 +1,7 @@
 import { Phone, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { EmergencyContact } from "./types";
+import { responseCopy } from "./emergencyCopy";
 
 type Props = {
   contacts: EmergencyContact[];
@@ -10,7 +11,7 @@ const EmergencyContacts = ({ contacts }: Props) => {
   return (
     <Card className="border-primary/20 bg-card/70">
       <CardHeader>
-        <CardTitle>Emergency Contacts</CardTitle>
+        <CardTitle>{responseCopy.contactsHeading}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3 md:grid-cols-2">
         {contacts.map((contact) => (

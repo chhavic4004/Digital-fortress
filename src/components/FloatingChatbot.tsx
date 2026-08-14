@@ -5,11 +5,46 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "@/lib/apiConfig";
+import type { EmergencyDomain } from "@/features/emergency/types";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
+
+// Emergency keyword -> domain map. Checked before the normal chatbot call.
+// Order matters: more specific domains are checked before "general_help".
+const EMERGENCY_KEYWORD_RULES: { domain: EmergencyDomain; patterns: RegExp[] }[] = [
+  {
+    domain: "fraud_upi",
+    patterns: [/upi fraud/i, /money gone/i, /money (was |got )?debited/i, /unauthorized transaction/i, /fraud(ulent)? (transaction|payment)/i],
+  },
+  {
+    domain: "account_compromise",
+    patterns: [/hacked/i, /account (compromised|hacked|taken over)/i, /can'?t log ?in/i, /locked out/i],
+  },
+  {
+    domain: "scam_phishing",
+    patterns: [/phishing/i, /scam(med)?/i, /fake link/i, /suspicious (link|message|sms|email)/i, /otp scam/i],
+  },
+  {
+    domain: "unsafe_wifi",
+    patterns: [/unsafe wifi/i, /unsafe wi-fi/i, /public wifi/i, /suspicious network/i],
+  },
+  {
+    domain: "general_help",
+    patterns: [/panic/i, /i need help now/i, /emergency/i, /help me now/i],
+  },
+];
+
+const detectEmergencyDomain = (text: string): EmergencyDomain | null => {
+  for (const rule of EMERGENCY_KEYWORD_RULES) {
+    if (rule.patterns.some((pattern) => pattern.test(text))) {
+      return rule.domain;
+    }
+  }
+  return null;
+};
 
 const FloatingChatbot = () => {
   const navigate = useNavigate();
@@ -35,6 +70,24 @@ const FloatingChatbot = () => {
     lang?: string;
   };
   const [recognition, setRecognition] = useState<SpeechRecognitionLike | null>(null);
+
+  // Navigate to the emergency guide with the domain preselected, and drop
+  // a confirmation message in the chat so the user knows what happened.
+  const routeToEmergencyGuide = useCallback(
+    (domain: EmergencyDomain) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "This sounds urgent — opening the Emergency Guide for you now.",
+        },
+      ]);
+      setTimeout(() => {
+        navigate(`/instant-action?domain=${domain}`);
+      }, 400);
+    },
+    [navigate]
+  );
 
   // Initialize Web Speech API with fallback
   useEffect(() => {
@@ -115,6 +168,15 @@ const FloatingChatbot = () => {
                   const transcript = e.results[0][0].transcript;
                   setInput(transcript);
                   setIsListening(false);
+
+                  // Emergency keyword check runs first, even for voice input
+                  const emergencyDomain = detectEmergencyDomain(transcript);
+                  if (emergencyDomain) {
+                    setMessages((prev) => [...prev, { role: "user", content: transcript }]);
+                    setInput("");
+                    routeToEmergencyGuide(emergencyDomain);
+                    return;
+                  }
                   
                   // Auto-send if voice command mode detected
                   const lowerTranscript = transcript.toLowerCase();
@@ -197,7 +259,7 @@ const FloatingChatbot = () => {
         ]);
       }
     }
-  }, [API_BASE_URL]);
+  }, [API_BASE_URL, routeToEmergencyGuide]);
 
   const startListening = useCallback(() => {
     // Reset network error state when starting to listen
@@ -250,6 +312,14 @@ const FloatingChatbot = () => {
 
     setMessages((prev) => [...prev, { role: "user", content: messageToSend }]);
     if (!voiceText) setInput("");
+
+    // Emergency keyword check runs before the normal chatbot call.
+    // If matched, skip the backend entirely and jump straight to the guide.
+    const emergencyDomain = detectEmergencyDomain(messageToSend);
+    if (emergencyDomain) {
+      routeToEmergencyGuide(emergencyDomain);
+      return;
+    }
 
         // Check for voice commands
         const isVoiceCommand = messageToSend.toLowerCase().includes("scan") ||
@@ -342,6 +412,11 @@ const FloatingChatbot = () => {
                   content: "Opening Scam Database for you now!",
                 },
               ]);
+            }, 500);
+          } else if (action === 'emergency_guide') {
+            const suggestedDomain = (data.data.domain as EmergencyDomain) || "general_help";
+            setTimeout(() => {
+              routeToEmergencyGuide(suggestedDomain);
             }, 500);
           } else {
             setTimeout(() => {
